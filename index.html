@@ -1,51 +1,71 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>薬剤シミュレーター</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    body {
-      font-family: sans-serif;
-      background: #f7f2e8;
-      text-align: center;
-      padding: 40px 20px;
-      color: #1f2a44;
-    }
+<title>薬剤シミュレーター</title>
 
-    .box {
-      background: white;
-      border-radius: 20px;
-      padding: 30px 20px;
-      max-width: 400px;
-      margin: auto;
-    }
+<style>
+body {
+  font-family: sans-serif;
+  background: #f7f2e8;
+  color: #1f2a44;
+  text-align: center;
+  padding: 30px 15px;
+}
 
-    h1 {
-      font-size: 28px;
-      margin-bottom: 10px;
-    }
+.box {
+  background: white;
+  max-width: 420px;
+  margin: auto;
+  padding: 25px;
+  border-radius: 20px;
+}
 
-    p {
-      line-height: 1.8;
-    }
+h1 {
+  font-size: 28px;
+}
 
-    button {
-      background: #1f2a44;
-      color: white;
-      border: none;
-      border-radius: 30px;
-      padding: 15px 50px;
-      font-size: 18px;
-      margin-top: 30px;
-    }
-  </style>
+h2 {
+  font-size: 22px;
+  margin-top: 20px;
+}
+
+p {
+  line-height: 1.7;
+}
+
+.option {
+  display: block;
+  text-align: left;
+  margin: 12px 0;
+  padding: 12px;
+  background: #f3f3f3;
+  border-radius: 10px;
+}
+
+button {
+  margin-top: 20px;
+  padding: 14px 40px;
+  border: none;
+  border-radius: 30px;
+  background: #1f2a44;
+  color: white;
+  font-size: 17px;
+}
+
+button:disabled {
+  opacity: 0.5;
+}
+</style>
+
 </head>
+
 
 <body>
 
-<div class="box">
+<div class="box" id="app">
 
 <h1>薬剤シミュレーター</h1>
 
@@ -54,11 +74,250 @@
 考える力を育てるためのツール
 </p>
 
-<button>
+<button onclick="start()">
 START
 </button>
 
 </div>
+
+
+<script>
+
+let step = 0;
+
+let answers = {
+ history: [],
+ curl: "",
+ hair: "",
+ damage: "",
+ power: ""
+};
+
+
+const questions = [
+
+{
+title:"施術履歴を教えてください",
+type:"multi",
+key:"history",
+options:[
+"バージン毛",
+"カラー毛",
+"縮毛矯正履歴あり",
+"ブリーチ履歴あり"
+]
+},
+
+{
+title:"クセの状態",
+type:"single",
+key:"curl",
+options:[
+"乾いた時にクセが出る",
+"濡れるとクセが強い",
+"S1タイプ",
+"S2タイプ"
+]
+},
+
+{
+title:"髪質",
+type:"single",
+key:"hair",
+options:[
+"細い",
+"普通",
+"太い",
+"硬い",
+"柔らかい"
+]
+},
+
+{
+title:"ダメージレベル",
+type:"single",
+key:"damage",
+options:[
+"低い",
+"中程度",
+"高い"
+]
+},
+
+{
+title:"髪の体力",
+type:"single",
+key:"power",
+options:[
+"あり",
+"普通",
+"低下している"
+]
+}
+
+];
+
+
+function start(){
+ step = 0;
+ showQuestion();
+}
+
+
+function showQuestion(){
+
+let q = questions[step];
+
+let html = `
+<h2>${q.title}</h2>
+`;
+
+q.options.forEach((o,i)=>{
+
+let type = q.type==="multi" ? "checkbox":"radio";
+
+html += `
+<label class="option">
+<input type="${type}" name="answer" value="${o}">
+${o}
+</label>
+`;
+
+});
+
+
+html += `
+<button onclick="next()">次へ</button>
+`;
+
+document.getElementById("app").innerHTML = html;
+
+}
+function next(){
+
+let q = questions[step];
+
+let selected = [];
+
+document.querySelectorAll('input[name="answer"]:checked')
+.forEach(input=>{
+selected.push(input.value);
+});
+
+
+if(selected.length === 0){
+alert("選択してください");
+return;
+}
+
+
+if(q.type==="multi"){
+answers[q.key] = selected;
+}else{
+answers[q.key] = selected[0];
+}
+
+
+step++;
+
+
+if(step < questions.length){
+
+showQuestion();
+
+}else{
+
+showConfirm();
+
+}
+
+}
+
+
+
+function showConfirm(){
+
+let html = `
+
+<h2>診断内容確認</h2>
+
+<p>
+施術履歴<br>
+${answers.history.join(" / ")}
+</p>
+
+<p>
+クセ<br>
+${answers.curl}
+</p>
+
+<p>
+髪質<br>
+${answers.hair}
+</p>
+
+<p>
+ダメージ<br>
+${answers.damage}
+</p>
+
+<p>
+髪の体力<br>
+${answers.power}
+</p>
+
+<h3>
+この内容で進みますか？
+</h3>
+
+<button onclick="start()">
+修正する
+</button>
+
+<br>
+
+<button onclick="result()">
+この内容で進む
+</button>
+
+`;
+
+document.getElementById("app").innerHTML = html;
+
+}
+
+
+
+function result(){
+
+let html = `
+
+<h2>今回の考察</h2>
+
+<p>
+診断内容をもとに<br>
+薬剤選定を考えるための参考情報です。
+</p>
+
+
+<p>
+この結果は薬剤決定ではありません。
+</p>
+
+
+<button onclick="start()">
+もう一度診断する
+</button>
+
+`;
+
+document.getElementById("app").innerHTML = html;
+
+}
+
+
+</script>
+
 
 </body>
 </html>
